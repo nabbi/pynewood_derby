@@ -1,0 +1,37 @@
+# Python cache & virtual environment
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv*/
+
+# Editor/OS-generated files
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+.~lock.*
+
+# Python lint/cache tools
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.cache/
+
+# Excel files
+*.xlsx
+!examples/*.xlsx
+
+# Logs or temp results (if you generate them)
+*.log
+*.bak
+*.tmp
+*.csv
+
+# Jupyter notebooks (if any used for analysis/testing)
+.ipynb_checkpoints/
+
+# VSCode or JetBrains settings (optional)
+.vscode/
+.idea/
