@@ -178,7 +178,7 @@ def update_racers_tab(path, summary_data):
 
         print("[OK] Racers sheet updated and sorted by Class, Group, Rank.")
 
-    except BaseException as err:
+    except Exception as err:
         print(f"[ERROR] Could not update 'Racers' sheet: {err}")
 
 
@@ -250,7 +250,7 @@ def process_results(filepath):
     """
     try:
         sheet_names = get_excel_sheet_names(filepath)
-    except BaseException as err:
+    except Exception as err:
         print(f"[ERROR] {err}")
         return
 
@@ -263,7 +263,7 @@ def process_results(filepath):
 
         try:
             df = read_excel_sheet(filepath, sheet_name=sheet)
-        except BaseException as err:
+        except Exception as err:
             print(f"[WARN] Could not read sheet '{sheet}': {type(err).__name__}: {err}")
             continue
 
@@ -318,7 +318,7 @@ def process_results(filepath):
             ) as writer:
                 summary.to_excel(writer, sheet_name=results_sheet, index=False)
             print(f"[OK] Rankings written to sheet: {results_sheet}")
-        except BaseException as err:
+        except Exception as err:
             print(f"[ERROR] Could not write rankings for '{sheet}': {err}")
 
         all_summaries.append(summary)
@@ -327,7 +327,7 @@ def process_results(filepath):
         try:
             full_summary = pd.concat(all_summaries, ignore_index=True)
             update_racers_tab(filepath, full_summary)
-        except BaseException as err:
+        except Exception as err:
             print(f"[ERROR] Failed to update Racers tab: {type(err).__name__}: {err}")
 
     print(
@@ -464,7 +464,7 @@ def add_runoff_tab(filepath):
         book.save(filepath)
         print(f"[OK] Runoff tab created with {len(runoff_df)} entries.")
 
-    except BaseException as err:
+    except Exception as err:
         print(f"[ERROR] Failed to create runoff tab: {err}")
 
 
