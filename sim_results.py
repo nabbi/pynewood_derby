@@ -10,7 +10,7 @@ import argparse
 import pandas as pd
 from openpyxl import load_workbook
 
-from race_utils import get_excel_sheet_names, secure_shuffle
+from race_utils import get_excel_sheet_names, secure_shuffle, _validate_excel_file
 
 
 def simulate_and_write_results(file_path: str, heat_sheets: list):
@@ -22,6 +22,7 @@ def simulate_and_write_results(file_path: str, heat_sheets: list):
         file_path (str): Path to the Excel file to be updated.
         heat_sheets (list): List of sheet names representing heats to simulate.
     """
+    _validate_excel_file(file_path)
     wb = load_workbook(file_path)
 
     for sheet_name in heat_sheets:
