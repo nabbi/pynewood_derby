@@ -19,7 +19,7 @@ Designed for fairness, traceability, and ease of use in large-scale events.
 | `heats_runoff.py`  | Generates head-to-head runoff heats (used for tiebreakers)              |
 | `sim_results.py`   | Simulates randomized results for testing and demo purposes              |
 | `results.py`       | Processes heat results and generates rankings and summaries             |
-| `race_utils.py`    | Shared utilities for heat validation, file handling, and formatting     |
+| `race_utils.py`    | Shared utilities for heat validation, opponent fairness optimization, secure shuffling, file handling, and formatting     |
 
 ---
 
@@ -44,7 +44,7 @@ Designed for fairness, traceability, and ease of use in large-scale events.
    ```
 
 4. **Generate Runoff Heats**  
-   Build fair runoff heats from tied top-3 racers:
+   Build fair runoff heats from tied top-3 racers (typically run after results.py into a new workbook):
    ```bash
    python heats_runoff.py raceday_runoff.xlsx [num_lanes]
    ```
@@ -88,7 +88,7 @@ This tab is used throughout the toolchain to generate, simulate, and evaluate re
 
 ## 📌 Requirements
 
-- Python 3.8+
+- Python 3.9+
 - Libraries: `pandas`, `openpyxl`, `numpy`, `scipy`
 
 ### Install via virtual environment:
@@ -108,4 +108,3 @@ pip install -r requirements.txt
 - Can be used for real events or simulated/testing environments
 
 ---
-
