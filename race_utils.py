@@ -577,9 +577,10 @@ def optimize_opponent_fairness(heats_df, iterations=500):
 
     improvement = initial_score - best_score
     print(
-        f"Fairness optimization completed: initial score = {initial_score:.3f}, optimized score = {best_score:.3f}, improvement = {improvement:.3f}"
+        f"Fairness optimization completed: initial score = {initial_score:.3f}, "
+        f"optimized score = {best_score:.3f}, "
+        f"improvement = {improvement:.3f}"
     )
-
     return best_df
 
 
