@@ -62,18 +62,26 @@ def sanitize_sheet_title(title):
     return title[:31]
 
 
-def is_valid_xlsx(fname):
+def _validate_excel_file(filename):
     """
-    Check if a file is a valid Excel .xlsx file.
+    Validates that the provided filename is an existing, valid Excel .xlsx file.
 
     Parameters:
-        fname (str): The path to the file.
+    ----------
+    filename : str
+        Path to the file to validate.
 
-    Returns:
-        bool: True if the file is a ZIP-structured .xlsx file.
+    Raises:
+    -------
+    FileNotFoundError: If the file does not exist.
+    ValueError: If the file is not an .xlsx file or not a valid zip file.
     """
-    return fname.lower().endswith(".xlsx") and zipfile.is_zipfile(fname)
-
+    if not os.path.isfile(filename):
+        raise FileNotFoundError(f"Excel file not found: {filename}")
+    if not filename.lower().endswith(".xlsx"):
+        raise ValueError(f"Invalid file format (must be .xlsx): {filename}")
+    if not zipfile.is_zipfile(filename):
+        raise ValueError(f"File is not a valid Excel zip file: {filename}")
 
 def read_excel_sheet(filename, sheet_name=None):
     """
@@ -89,10 +97,7 @@ def read_excel_sheet(filename, sheet_name=None):
     Raises:
         ValueError: If file is not valid or reading fails.
     """
-    if not os.path.isfile(filename):
-        raise FileNotFoundError(f"Excel file not found: {filename}")
-    if not filename.lower().endswith(".xlsx"):
-        raise ValueError(f"Invalid file format (must be .xlsx): {filename}")
+    _validate_excel_file(filename)
 
     try:
         return pd.read_excel(filename, sheet_name=sheet_name)
@@ -115,10 +120,7 @@ def get_excel_sheet_names(filename):
         ValueError: If the Excel file contains no sheets.
         Exception: If the file can't be opened as an Excel file.
     """
-    if not os.path.isfile(filename):
-        raise FileNotFoundError(f"Excel file not found: {filename}")
-    if not filename.lower().endswith(".xlsx"):
-        raise ValueError(f"Invalid file format (must be .xlsx): {filename}")
+    _validate_excel_file(filename)
 
     try:
         sheet_names = pd.ExcelFile(filename).sheet_names
