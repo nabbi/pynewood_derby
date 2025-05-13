@@ -53,6 +53,11 @@ def _generate_small_group_heats(cars, lane_labels):
             - "Car": the car identifier,
             - "Lane": the lane the car is assigned to in that heat.
 
+    Notes:
+    ------
+    - If the number of lanes exceeds the number of cars, only the first `len(cars)` lanes are used.
+    - Each car rotates through each lane exactly once.
+
     Example:
     -------
     >>> _generate_small_group_heats(["CarA", "CarB", "CarC"], ["L1", "L2", "L3", "L4"])
@@ -131,6 +136,8 @@ def generate_round_robin_heats(cars, num_lanes):
     - Uses a helper `_generate_small_group_heats` for small groups.
     - Relies on a secure shuffle (assumed from `secure_shuffle()`) for fair and
       randomized lane assignments.
+    - If no full pairing can be made in a heat (due to lane limits vs remaining cars),
+      an arbitrary leftover pair is forcibly added to ensure all matchups are completed.
     """
     lane_labels = [chr(ord("A") + i) for i in range(num_lanes)]
 
@@ -199,7 +206,8 @@ def validate_runoff_heats(heats_df, expected_matchups, cars=None, num_lanes=None
 
     Notes:
     ------
-    This function prints detailed error messages to help identify the cause of any failure.
+    - Prints detailed error messages to help identify validation failures.
+    - Only used when number of cars is less than or equal to the number of lanes.
     """
 
     def _validate_heat(group, heat_num):
@@ -361,6 +369,7 @@ def process_class_group(writer, cls, grp, group_df, num_lanes):
     - If fewer than 2 cars are present, the group is skipped with a log message.
     - For valid groups, it tries up to 200 times to generate heats that pass validation.
     - The heat schedule includes Heat, Car, Name, Lane, and Place columns.
+    - Small groups (cars <= lanes) use `_generate_small_group_heats`, larger groups use pairing logic.
     - Final output is sorted by heat and lane and written to an Excel sheet with a sanitized name.
 
     Sheet Naming:

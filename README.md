@@ -93,8 +93,8 @@ This tab is used throughout the toolchain to generate, simulate, and evaluate re
 
 ### Install via virtual environment:
 ```bash
-python3 -m venv venv-pynewood-derby
-source venv-pynewood-derby/bin/activate
+python3 -m venv venv-pynewood_derby
+source venv-pynewood_derby/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```

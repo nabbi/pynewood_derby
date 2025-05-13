@@ -133,7 +133,8 @@ def generate_heats(entry_list, num_lanes=4, runs_per_car=None) -> pd.DataFrame:
     This function ensures that:
     - Each car runs in multiple lanes (based on `runs_per_car` or default `num_lanes`).
     - No car or lane is repeated in a single heat.
-    - Each heat contains up to `num_lanes` cars and lanes.
+    - Each heat contains up to `num_lanes` cars,
+      and only if at least 2 cars are assignable does the heat qualify as valid.
     - Heats are further optimized to improve fairness of opponent distribution.
 
     Parameters:
