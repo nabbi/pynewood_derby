@@ -5,16 +5,15 @@ This module is intended to be imported into both heats.py and results.py
 
 import math
 import os
+import random
 import re
 import secrets
 import zipfile
-import random
-
 from collections import defaultdict
 
 import pandas as pd
 from openpyxl import load_workbook
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 
 def is_nan(val):
@@ -83,6 +82,7 @@ def _validate_excel_file(filename):
     if not zipfile.is_zipfile(filename):
         raise ValueError(f"File is not a valid Excel zip file: {filename}")
 
+
 def read_excel_sheet(filename, sheet_name=None):
     """
     Safely read an Excel sheet into a DataFrame with validation.
@@ -98,6 +98,9 @@ def read_excel_sheet(filename, sheet_name=None):
         ValueError: If file is not valid or reading fails.
     """
     _validate_excel_file(filename)
+
+    if sheet_name and sheet_name not in get_excel_sheet_names(filename):
+        raise ValueError(f"Sheet '{sheet_name}' not found in file '{filename}'.")
 
     try:
         return pd.read_excel(filename, sheet_name=sheet_name)
@@ -694,9 +697,9 @@ def rebalance_heats(heats_df, num_lanes):
     return heats_df
 
 
-def validate_unique_car_ids(df):
+def validate_racers_columns(df):
     """
-    Validates that all Car IDs in a DataFrame are unique.
+    Validates that the Racers DataFrame contains all required columns and that Car IDs are unique.
 
     This function is designed to be run against the Racers tab prior to any downstream
     results processing. It prevents misattribution, data corruption, or silent merge errors
@@ -717,7 +720,7 @@ def validate_unique_car_ids(df):
 
     Example:
     --------
-    >>> validate_unique_car_ids(racers_df)
+    >>> validate_racers_columns(racers_df)
 
     Notes:
     ------
@@ -726,7 +729,59 @@ def validate_unique_car_ids(df):
     - It can be safely reused in any context where 'Car' uniqueness must be enforced.
 
     """
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError(f"Sheet is not a valid DataFrame.")
+
+    if df.empty:
+        raise ValueError(f"Sheet is empty.")
+
+    REQUIRED_COLUMNS = {"Car", "Class", "Group", "Name"}
+    missing = REQUIRED_COLUMNS - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in Racers sheet: {sorted(missing)}")
+
     car_series = df["Car"].dropna().astype(str)
     duplicates = car_series[car_series.duplicated()]
     if not duplicates.empty:
         raise ValueError(f"Duplicate Car IDs found: {duplicates.unique().tolist()}")
+
+
+def validate_heat_sheet_columns(df):
+    """
+    Validates that a heat sheet DataFrame contains all required columns.
+
+    This function should be run against any heat sheet before results simulation
+    or scoring to ensure structural integrity.
+
+    Parameters:
+    ----------
+    df : pandas.DataFrame
+        The DataFrame expected to contain heat race data.
+
+    Raises:
+    -------
+    ValueError
+        If any required columns are missing.
+
+    Example:
+    --------
+    >>> validate_heat_sheet_columns(heat_df)
+
+    Notes:
+    ------
+    Required columns are:
+    - 'Car': car identifier
+    - 'Heat': heat number
+    - 'Lane': lane assignment
+    - 'Place': (optional initially) place in heat
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError(f"Sheet is not a valid DataFrame.")
+
+    if df.empty:
+        raise ValueError(f"Sheet is empty.")
+
+    REQUIRED_COLUMNS = {"Car", "Heat", "Lane", "Place"}
+    missing = REQUIRED_COLUMNS - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in heat sheet: {sorted(missing)}")

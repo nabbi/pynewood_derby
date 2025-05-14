@@ -11,13 +11,20 @@ Usage:
 """
 
 import sys
+
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from scipy.stats import rankdata
 
-from race_utils import format_all_sheets, get_excel_sheet_names, read_excel_sheet
+from race_utils import (
+    format_all_sheets,
+    get_excel_sheet_names,
+    read_excel_sheet,
+    validate_heat_sheet_columns,
+    validate_racers_columns,
+)
 
 
 def calculate_opponent_uniqueness(df):
@@ -182,7 +189,7 @@ def update_racers_tab(path, summary_data):
         print(f"[ERROR] Could not update 'Racers' sheet: {err}")
 
 
-def process_results(filepath):
+def process_results(file_path):
     """
     Processes all heat sheets in a race workbook to calculate standings,
     rank competitors, and update summary information across the file.
@@ -194,7 +201,7 @@ def process_results(filepath):
 
     Parameters:
     ----------
-    filepath : str
+    file_path : str
         Full path to the Excel file containing race heat results and a "Racers" sheet.
 
     Behavior:
@@ -249,7 +256,7 @@ def process_results(filepath):
     - Should be called after all heats are recorded and finalized
     """
     try:
-        sheet_names = get_excel_sheet_names(filepath)
+        sheet_names = get_excel_sheet_names(file_path)
     except Exception as err:
         print(f"[ERROR] {err}")
         return
@@ -262,21 +269,15 @@ def process_results(filepath):
             continue
 
         try:
-            df = read_excel_sheet(filepath, sheet_name=sheet)
+            df = read_excel_sheet(file_path, sheet_name=sheet)
         except Exception as err:
             print(f"[WARN] Could not read sheet '{sheet}': {type(err).__name__}: {err}")
             continue
 
-        if not isinstance(df, pd.DataFrame) or df.empty or "Place" not in df.columns:
-            print(f"[WARN] Sheet '{sheet}' is empty or missing 'Place'. Skipping.")
-            continue
+        validate_heat_sheet_columns(df)
 
         df = df[pd.to_numeric(df["Place"], errors="coerce").notna()]
         df["Place"] = df["Place"].astype(int)
-
-        if df.empty:
-            print(f"[WARN] Sheet '{sheet}' has no usable placements. Skipping.")
-            continue
 
         lane_count_max = df["Lane"].nunique()
         df["Heat_Size"] = df.groupby("Heat")["Car"].transform("count")
@@ -314,7 +315,7 @@ def process_results(filepath):
         results_sheet = f"{sheet}_Rankings"
         try:
             with pd.ExcelWriter(
-                filepath, engine="openpyxl", mode="a", if_sheet_exists="replace"
+                file_path, engine="openpyxl", mode="a", if_sheet_exists="replace"
             ) as writer:
                 summary.to_excel(writer, sheet_name=results_sheet, index=False)
             print(f"[OK] Rankings written to sheet: {results_sheet}")
@@ -326,7 +327,7 @@ def process_results(filepath):
     if all_summaries:
         try:
             full_summary = pd.concat(all_summaries, ignore_index=True)
-            update_racers_tab(filepath, full_summary)
+            update_racers_tab(file_path, full_summary)
         except Exception as err:
             print(f"[ERROR] Failed to update Racers tab: {type(err).__name__}: {err}")
 
@@ -337,7 +338,7 @@ def process_results(filepath):
     )
 
 
-def add_runoff_tab(filepath):
+def add_runoff_tab(file_path):
     """
     Adds a "Runoff" sheet to the Excel workbook if any group contains a tie
     within the top 3 rankings.
@@ -349,7 +350,7 @@ def add_runoff_tab(filepath):
 
     Parameters:
     ----------
-    filepath : str
+    file_path : str
         Path to the Excel workbook containing heat results, rankings, and racer info.
 
     Behavior:
@@ -402,13 +403,15 @@ def add_runoff_tab(filepath):
       within the top 3 positions.
     """
     try:
-        df_all = read_excel_sheet(filepath)
+        df_all = read_excel_sheet(file_path)
 
         if "Racers" not in df_all:
             print("[INFO] No 'Racers' sheet to update.")
             return
 
         racers_df = df_all["Racers"]
+        validate_racers_columns(racers_df)
+
         racers_df["Car"] = racers_df["Car"].astype(str)
         runoff_rows = []
 
@@ -421,7 +424,7 @@ def add_runoff_tab(filepath):
 
             df["Car"] = df["Car"].astype(str)
             top3_df = df[df["Rank"].isin([1, 2, 3])].copy()
-            rank_counts = top3_df["Rank"].value_counts()
+            rank_counts = top3_df["Rank"].value_counts().to_dict()
 
             if any(rank_counts.get(r, 0) != 1 for r in [1, 2, 3]):
                 enriched = top3_df.merge(
@@ -450,7 +453,7 @@ def add_runoff_tab(filepath):
         ]
         runoff_df = runoff_df.sort_values(by=["Class", "Group", "LastRank", "Name"])
 
-        book = load_workbook(filepath)
+        book = load_workbook(file_path)
         if "Runoff" in book.sheetnames:
             book.remove(book["Runoff"])
         sheet = book.create_sheet("Runoff", index=1)
@@ -461,7 +464,7 @@ def add_runoff_tab(filepath):
             for c_idx, value in enumerate(row, 1):
                 sheet.cell(row=r_idx, column=c_idx, value=value)
 
-        book.save(filepath)
+        book.save(file_path)
         print(f"[OK] Runoff tab created with {len(runoff_df)} entries.")
 
     except Exception as err:

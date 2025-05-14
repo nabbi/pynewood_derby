@@ -16,16 +16,17 @@ Output:
 
 import sys
 from itertools import combinations
+
 import pandas as pd
 
 from race_utils import (
+    format_all_sheets,
+    get_racer_heats,
     read_excel_sheet,
     sanitize_sheet_title,
     secure_shuffle,
-    format_all_sheets,
-    get_racer_heats,
     update_racer_heats,
-    validate_unique_car_ids,
+    validate_racers_columns,
 )
 
 
@@ -444,7 +445,7 @@ def main():
         print(f"[ERROR] {err}")
         sys.exit(1)
 
-    validate_unique_car_ids(df)
+    validate_racers_columns(df)
 
     df["Car"] = df["Car"].astype(str)
     grouped = df.groupby(["Class", "Group"], dropna=False)

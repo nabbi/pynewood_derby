@@ -14,18 +14,20 @@ Usage:
 """
 
 import sys
+
 import pandas as pd
+
 from race_utils import (
-    read_excel_sheet,
-    is_nan,
-    secure_shuffle,
-    rebalance_heats,
-    optimize_opponent_fairness,
-    sanitize_sheet_title,
-    get_racer_heats,
-    update_racer_heats,
     format_all_sheets,
-    validate_unique_car_ids,
+    get_racer_heats,
+    is_nan,
+    optimize_opponent_fairness,
+    read_excel_sheet,
+    rebalance_heats,
+    sanitize_sheet_title,
+    secure_shuffle,
+    update_racer_heats,
+    validate_racers_columns,
 )
 
 
@@ -258,7 +260,7 @@ if __name__ == "__main__":
         print(f"[ERROR] {err}")
         sys.exit(1)
 
-    validate_unique_car_ids(df)
+    validate_racers_columns(df)
 
     classes = df["Class"].dropna().unique()
     for c_class in classes:
