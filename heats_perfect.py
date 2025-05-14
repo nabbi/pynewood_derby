@@ -239,7 +239,19 @@ def generate_heats(entry_list, num_lanes=4, runs_per_car=None) -> pd.DataFrame:
     return optimized_df
 
 
-if __name__ == "__main__":
+def get_cli_args():
+    """
+    Parse and return command-line arguments.
+
+    Returns:
+        tuple: (filename (str), lanes (int), runs (int))
+            filename: The Excel file containing racer data.
+            lanes: Number of lanes for the track (default: 4).
+            runs: Number of runs per car (default: lanes).
+
+    Raises:
+        SystemExit: If invalid arguments are provided.
+    """
     if len(sys.argv) < 2:
         print(
             "Usage: python heats_perfect.py <racers_file.xlsx> [num_lanes] [runs_per_car]"
@@ -254,6 +266,22 @@ if __name__ == "__main__":
         print("[ERROR] Number of lanes must be between 2 and 8.")
         sys.exit(1)
 
+    return filename, lanes, runs
+
+
+def load_and_validate_data(filename):
+    """
+    Load racers data from Excel and validate required columns.
+
+    Args:
+        filename (str): Path to the Excel file containing racer data.
+
+    Returns:
+        pandas.DataFrame: DataFrame of validated racer data.
+
+    Raises:
+        SystemExit: If the file cannot be loaded or is missing required columns.
+    """
     try:
         df = read_excel_sheet(filename, sheet_name="Racers")
     except ValueError as err:
@@ -261,7 +289,27 @@ if __name__ == "__main__":
         sys.exit(1)
 
     validate_racers_columns(df)
+    return df
 
+
+def process_class_group(df, filename, lanes, runs):
+    """
+    Process heats generation for each unique class and group combination.
+
+    For each class/group:
+    - Randomly shuffle car entries.
+    - Generate heats ensuring fairness and validation.
+    - Write heats to corresponding sheets in the Excel file.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame of racer entries.
+        filename (str): Path to the Excel file to update.
+        lanes (int): Number of lanes for the track.
+        runs (int): Number of runs per car.
+
+    Raises:
+        None: Logs and skips any group that fails validation after attempts.
+    """
     classes = df["Class"].dropna().unique()
     for c_class in classes:
         dfclass = df[df["Class"] == c_class]
@@ -326,6 +374,28 @@ if __name__ == "__main__":
                     "after 200 attempts."
                 )
 
+
+def main():
+    """
+    Main entry point for Pinewood Derby heats generation.
+
+    Workflow:
+    1. Parse command-line arguments.
+    2. Load racer data and validate.
+    3. Process heats for each class and group.
+    4. Update racer heats summary.
+    5. Format all sheets in the Excel file.
+
+    Raises:
+        SystemExit: For critical failures (invalid CLI args, file load errors).
+    """
+    filename, lanes, runs = get_cli_args()
+    df = load_and_validate_data(filename)
+    process_class_group(df, filename, lanes, runs)
     heats_data = get_racer_heats(filename)
     update_racer_heats(filename, heats_data)
     format_all_sheets(filename)
+
+
+if __name__ == "__main__":
+    main()

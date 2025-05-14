@@ -426,11 +426,15 @@ def process_class_group(writer, cls, grp, group_df, num_lanes):
     print(f"[OK] Heats written to sheet: {sheet_name}")
 
 
-def main():
+def get_cli_args():
     """
-    Main entry point for the runoff heat generator script.
-    Reads the Racers tab from an Excel file, generates round-robin heats
-    per class/group, validates them, and appends them to the file.
+    Parse and return command-line arguments.
+
+    Returns:
+        tuple: (filename (str), num_lanes (int))
+
+    Raises:
+        SystemExit: If required arguments are missing.
     """
     if len(sys.argv) < 2:
         print("Usage: python heats_runoff.py <racers_file.xlsx> [num_lanes]")
@@ -438,7 +442,22 @@ def main():
 
     filename = sys.argv[1]
     num_lanes = int(sys.argv[2]) if len(sys.argv) > 2 else 4
+    return filename, num_lanes
 
+
+def load_and_validate_data(filename):
+    """
+    Load racers data from Excel and validate required columns.
+
+    Args:
+        filename (str): Path to Excel file.
+
+    Returns:
+        pandas.DataFrame: Validated racers DataFrame.
+
+    Raises:
+        SystemExit: If file load or validation fails.
+    """
     try:
         df = read_excel_sheet(filename, sheet_name="Racers")
     except ValueError as err:
@@ -446,20 +465,58 @@ def main():
         sys.exit(1)
 
     validate_racers_columns(df)
-
     df["Car"] = df["Car"].astype(str)
+    return df
+
+
+def write_initial_data(writer, df):
+    """
+    Write the initial racers DataFrame back to Excel.
+
+    Args:
+        writer (pd.ExcelWriter): Open Excel writer.
+        df (pd.DataFrame): Racers DataFrame to write.
+    """
+    df.to_excel(writer, sheet_name="Racers", index=False)
+
+
+def process_groups(writer, grouped, num_lanes):
+    """
+    Process each class and group to generate heats.
+
+    Args:
+        writer (pd.ExcelWriter): Open Excel writer.
+        grouped (pd.core.groupby.DataFrameGroupBy): Grouped racers data.
+        num_lanes (int): Number of lanes to use for heat generation.
+    """
+    for (cls, grp), group_df in grouped:
+        process_class_group(writer, cls, grp, group_df, num_lanes)
+
+
+def main():
+    """
+    Main entry point for the runoff heat generator script.
+
+    This function performs the following steps:
+    1. Parses command-line arguments to get the Excel filename and optional number of lanes.
+    2. Loads and validates racer data.
+    3. Writes initial data to Excel.
+    4. Processes each class and group to generate heats.
+    5. Updates racer heat assignments.
+    6. Formats all sheets in the workbook.
+    """
+    filename, num_lanes = get_cli_args()
+    df = load_and_validate_data(filename)
     grouped = df.groupby(["Class", "Group"], dropna=False)
 
     with pd.ExcelWriter(
         filename, engine="openpyxl", mode="a", if_sheet_exists="replace"
     ) as writer:
-        df.to_excel(writer, sheet_name="Racers", index=False)
-        for (cls, grp), group_df in grouped:
-            process_class_group(writer, cls, grp, group_df, num_lanes)
+        write_initial_data(writer, df)
+        process_groups(writer, grouped, num_lanes)
 
     heats_data = get_racer_heats(filename)
     update_racer_heats(filename, heats_data)
-
     format_all_sheets(filename)
     print(f"[DONE] Runoff heats updated in: {filename}")
 

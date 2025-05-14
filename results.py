@@ -471,12 +471,40 @@ def add_runoff_tab(file_path):
         print(f"[ERROR] Failed to create runoff tab: {err}")
 
 
-if __name__ == "__main__":
+def get_cli_args():
+    """
+    Parse command-line arguments.
+
+    Returns:
+        str: Path to the Excel results file.
+
+    Raises:
+        SystemExit: If no file argument is provided.
+    """
     if len(sys.argv) < 2:
         print(f"Usage: python {sys.argv[0]} <results_file.xlsx>")
         sys.exit(1)
+    return sys.argv[1]
 
-    arg_file = sys.argv[1]
+
+def main():
+    """
+    Main function for Pinewood Derby results processing.
+
+    Workflow:
+        1. Parse command-line argument for results file.
+        2. Process race results.
+        3. Add runoff tab.
+        4. Format all sheets in the workbook.
+
+    Raises:
+        SystemExit: If any critical error occurs.
+    """
+    arg_file = get_cli_args()
     process_results(arg_file)
     add_runoff_tab(arg_file)
     format_all_sheets(arg_file)
+
+
+if __name__ == "__main__":
+    main()
