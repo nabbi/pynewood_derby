@@ -25,6 +25,7 @@ from race_utils import (
     get_racer_heats,
     update_racer_heats,
     format_all_sheets,
+    validate_unique_car_ids,
 )
 
 
@@ -256,6 +257,8 @@ if __name__ == "__main__":
     except ValueError as err:
         print(f"[ERROR] {err}")
         sys.exit(1)
+
+    validate_unique_car_ids(df)
 
     classes = df["Class"].dropna().unique()
     for c_class in classes:

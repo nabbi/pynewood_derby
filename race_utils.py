@@ -692,3 +692,41 @@ def rebalance_heats(heats_df, num_lanes):
     )
 
     return heats_df
+
+
+def validate_unique_car_ids(df):
+    """
+    Validates that all Car IDs in a DataFrame are unique.
+
+    This function is designed to be run against the Racers tab prior to any downstream
+    results processing. It prevents misattribution, data corruption, or silent merge errors
+    due to duplicated Car identifiers.
+
+    The function treats Car IDs as strings and ignores blank (NaN) entries.
+
+    Parameters:
+    ----------
+    df : pandas.DataFrame
+        The DataFrame expected to contain a 'Car' column.
+
+    Raises:
+    -------
+    ValueError
+        If any duplicate (non-null) Car IDs are found. A list of duplicate IDs is included
+        in the exception message for easy troubleshooting.
+
+    Example:
+    --------
+    >>> validate_unique_car_ids(racers_df)
+
+    Notes:
+    ------
+    - This is intended for use early in the pipeline, typically immediately after reading
+      the Racers sheet from the workbook.
+    - It can be safely reused in any context where 'Car' uniqueness must be enforced.
+
+    """
+    car_series = df["Car"].dropna().astype(str)
+    duplicates = car_series[car_series.duplicated()]
+    if not duplicates.empty:
+        raise ValueError(f"Duplicate Car IDs found: {duplicates.unique().tolist()}")

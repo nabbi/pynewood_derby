@@ -25,6 +25,7 @@ from race_utils import (
     format_all_sheets,
     get_racer_heats,
     update_racer_heats,
+    validate_unique_car_ids,
 )
 
 
@@ -442,6 +443,8 @@ def main():
     except ValueError as err:
         print(f"[ERROR] {err}")
         sys.exit(1)
+
+    validate_unique_car_ids(df)
 
     df["Car"] = df["Car"].astype(str)
     grouped = df.groupby(["Class", "Group"], dropna=False)
