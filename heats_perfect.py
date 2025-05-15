@@ -16,6 +16,7 @@ Usage:
 import sys
 
 import pandas as pd
+from typing import Union
 
 from race_utils import (
     format_all_sheets,
@@ -35,7 +36,7 @@ def validate_heats(
     heat_df: pd.DataFrame,
     expected_races_per_car: int,
     min_cars_per_heat: int = 2,
-    all_cars: set | list | None = None,
+    all_cars: Union[set, list, None] = None,
 ) -> bool:
     """
     Validates a set of heats for fairness, consistency, and completeness
