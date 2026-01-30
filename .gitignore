@@ -18,6 +18,7 @@ Thumbs.db
 .mypy_cache/
 .pytest_cache/
 .cache/
+.coverage
 
 # Excel files
 *.xlsx
