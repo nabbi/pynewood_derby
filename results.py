@@ -426,7 +426,7 @@ def add_runoff_tab(file_path):
             top3_df = df[df["Rank"].isin([1, 2, 3])].copy()
             rank_counts = top3_df["Rank"].value_counts().to_dict()
 
-            if any(rank_counts.get(r, 0) != 1 for r in [1, 2, 3]):
+            if any(rank_counts.get(r, 0) > 1 for r in [1, 2, 3]):
                 enriched = top3_df.merge(
                     racers_df[["Car", "Class", "Group", "Description"]],
                     how="left",
